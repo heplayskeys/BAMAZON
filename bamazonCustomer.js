@@ -15,49 +15,160 @@ connection.connect((err) => {
     afterConnection();
 });
 
-var userItem;
-var userQty;
+var store = {
 
-function reqId() {
-    inquirer.prompt(
-        {
-            type: "input",
-            message: "Please enter the ITEM NO. you'd like to purchase:",
-            name: "itemNo"
-        })
-    .then((response) => {
+    userItem: null,
+    userQty: null,
+    itemPrice: null,
+    itemStock: null,
+    itemName: null,
+    itemPrice: null,
+    
+    reqId() {
+        inquirer.prompt(
+            {
+                type: "input",
+                message: "Please enter the ITEM NO. you'd like to purchase:",
+                name: "itemNo"
+            })
+        .then((response) => {
 
-        userItem = response.itemNo;
-        console.log(userItem);
-        reqQty();
-    });
-}
+            this.userItem = response.itemNo;
+            
+            connection.query("SELECT stock_quantity FROM products", (err, res, fields) => {
 
-function reqQty() {
-    inquirer.prompt(
-        {
-            type: "input",
-            message: "What quatity would you like to purchase?",
-            name: "itemQty"
-        })
-    .then((response) => {
+                if (err) throw err;
 
-        userQty = response.itemQty;
-        console.log(userQty);
-    });
+                if (res[this.userItem - 1].stock_quantity > 0) {
+                    this.reqQty();
+                }
+                else {
+                    this.invCheck();
+                }
+            });
+        });
+    },
+
+    reqQty() {
+        inquirer.prompt(
+            {
+                type: "input",
+                message: "What quatity would you like to purchase?",
+                name: "itemQty"
+            })
+        .then((response) => {
+
+            this.userQty = response.itemQty;
+            this.invCheck();
+        });
+    },
+
+    invCheck() {
+
+        connection.query("SELECT * FROM products", (err, res, fields) => {
+            if (err) throw err;
+
+            this.itemStock = res[this.userItem - 1].stock_quantity;
+
+            if (this.itemStock !== 0) {
+
+                if ((this.itemStock - this.userQty) >= 0) {
+                    console.log(this.itemStock);
+
+                    this.itemStock -= this.userQty;
+                    console.log(this.itemStock);
+
+                    this.itemName = res[this.userItem - 1].product_name;
+                    this.itemPrice = res[this.userItem - 1].price;
+
+                    connection.query("UPDATE products SET ? WHERE ?", [{stock_quantity: this.itemStock}, {item_id: this.userItem}], (err, res, fields) => {
+                        if (err) throw err;
+
+                        console.log("Your order for \'" + this.itemName + "\' has been placed. Thank you!\n");
+                        console.log("SALE RECEIPT:");
+                        console.log("---------------");
+                        console.log(this.userQty + " X " + this.itemName);
+                        console.log("Total: $" + (this.userQty * this.itemPrice).toFixed(2) + "\n");
+
+                        inquirer.prompt(
+                            {
+                                type: "confirm",
+                                message: "Would you like to place another order?",
+                                name: "newOrder"
+                            }
+                        ).then((response) => {
+                            if (response.newOrder) {
+                                afterConnection();
+                            }
+                            else {
+                                console.log("\nHave a great day!")
+                                connection.end();
+                            }
+                        });
+                    });
+                }
+            }
+            else {
+                console.log("We currently do not have sufficient stock of \'" + res[this.userItem - 1].product_name + "\' to fill your order. Current Stock: " + this.itemStock + "\n");
+
+                if (this.itemStock !== 0) {
+                    inquirer.prompt(
+                        {
+                            type: "confirm",
+                            message: "Would you like to select a different quantity?",
+                            name: "reOrder"
+                        }
+                    ).then((response) => {
+
+                        if (response.reOrder) {
+                            this.reqQty();
+                        }
+                    });
+                }
+                else {
+                    inquirer.prompt(
+                        {
+                            type: "confirm",
+                            message: "Would you like to place a different order?",
+                            name: "newOrder"
+                        }
+                    ).then((response) => {
+
+                        if (response.newOrder) {
+                            afterConnection();
+                        }
+                        else {
+                            console.log("\nHave a great day!");
+                            connection.end();
+                        }
+                    });
+                }
+            }
+        });
+    }
 }
 
 function afterConnection() {
 
-    connection.query("SELECT item_id, product_name, price FROM products", (err, res, fields) => {
+    connection.query("SELECT * FROM products", (err, res, fields) => {
         if (err) throw err;
 
+        console.log("\nSTORE ITEMS:");
+        console.log("---------------");
+
         for (let i = 0; i < res.length; i++) {
-            console.log(res[i].item_id + ". " + res[i].product_name + " -- " + res[i].price);
+
+            if (res[i].stock_quantity > 0) {
+                console.log(res[i].item_id + ". " + res[i].product_name + " -- " + res[i].price);
+            }
+            else {
+                console.log(res[i].item_id + ". " + res[i].product_name + " -- " + "SOLD OUT");
+            }
         }
 
         console.log("\n");
 
-        reqId();
+        store.reqId();
+
     });
 }
