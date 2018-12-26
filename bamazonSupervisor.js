@@ -29,11 +29,11 @@ var supervisor = {
             switch (response.superAction) {
 
                 case "View Product Sales by Department":
-                    connection.query("SELECT departments.department_id, departments.department_name, departments.over_head_costs, products.product_sales FROM departments LEFT JOIN products ON departments.department_name = products.department_name GROUP BY department_id", (err, res, fields) => {
+                    connection.query("SELECT departments.department_id AS DEPT_ID, departments.department_name AS DEPARTMENT, departments.over_head_costs AS OVERHEAD, products.product_sales AS REVENUE FROM departments LEFT JOIN products ON departments.department_name = products.department_name GROUP BY department_id", (err, res, fields) => {
                         if (err) throw err;
 
                         for (let i = 0; i < res.length; i++) {
-                            res[i].total_profit = (res[i].product_sales - res[i].over_head_costs);
+                            res[i].PROFIT = (res[i].REVENUE - res[i].OVERHEAD);
                         }
 
                         console.log("\n");
