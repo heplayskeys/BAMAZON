@@ -73,15 +73,13 @@ var store = {
             if (this.itemStock !== 0) {
 
                 if ((this.itemStock - this.userQty) >= 0) {
-                    console.log(this.itemStock);
-
+                    
                     this.itemStock -= this.userQty;
-                    console.log(this.itemStock);
 
                     this.itemName = res[this.userItem - 1].product_name;
                     this.itemPrice = res[this.userItem - 1].price;
 
-                    connection.query("UPDATE products SET ? WHERE ?", [{stock_quantity: this.itemStock}, {item_id: this.userItem}], (err, res, fields) => {
+                    connection.query("UPDATE products SET ? WHERE ?", [{stock_quantity: this.itemStock, product_sales: (this.userQty * this.itemPrice)}, {item_id: this.userItem}], (err, res, fields) => {
                         if (err) throw err;
 
                         console.log("Your order for \'" + this.itemName + "\' has been placed. Thank you!\n");
@@ -169,6 +167,5 @@ function afterConnection() {
         console.log("\n");
 
         store.reqId();
-
     });
 }
