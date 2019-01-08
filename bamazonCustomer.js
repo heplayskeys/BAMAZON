@@ -105,41 +105,42 @@ var store = {
                         });
                     });
                 }
-            }
-            else {
-                console.log("We currently do not have sufficient stock of \'" + res[this.userItem - 1].product_name + "\' to fill your order. Current Stock: " + this.itemStock + "\n");
 
-                if (this.itemStock !== 0) {
-                    inquirer.prompt(
-                        {
-                            type: "confirm",
-                            message: "Would you like to select a different quantity?",
-                            name: "reOrder"
-                        }
-                    ).then((response) => {
-
-                        if (response.reOrder) {
-                            this.reqQty();
-                        }
-                    });
-                }
                 else {
-                    inquirer.prompt(
-                        {
-                            type: "confirm",
-                            message: "Would you like to place a different order?",
-                            name: "newOrder"
-                        }
-                    ).then((response) => {
+                    console.log("We currently do not have sufficient stock of \'" + res[this.userItem - 1].product_name + "\' to fill your order. Current Stock: " + this.itemStock + "\n");
 
-                        if (response.newOrder) {
-                            afterConnection();
-                        }
-                        else {
-                            console.log("\nHave a great day!");
-                            connection.end();
-                        }
-                    });
+                    if (this.itemStock !== 0) {
+                        inquirer.prompt(
+                            {
+                                type: "confirm",
+                                message: "Would you like to select a different quantity?",
+                                name: "reOrder"
+                            }
+                        ).then((response) => {
+
+                            if (response.reOrder) {
+                                this.reqQty();
+                            }
+                            else {
+                                inquirer.prompt(
+                                    {
+                                        type: "confirm",
+                                        message: "Would you like to place a different order?",
+                                        name: "newOrder"
+                                    }
+                                ).then((response) => {
+        
+                                    if (response.newOrder) {
+                                        afterConnection();
+                                    }
+                                    else {
+                                        console.log("\nHave a great day!");
+                                        connection.end();
+                                    }
+                                });
+                            }
+                        });
+                    } 
                 }
             }
         });

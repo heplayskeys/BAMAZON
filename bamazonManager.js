@@ -40,7 +40,7 @@ var manager = {
                     break;
 
                     case "View Low Inventory":
-                        console.log("The following products are low in stock (> 5):\n");
+                        console.log("The following products are low in stock (< 5):\n");
                         for (let i = 0; i < res.length; i++) {
                             if (res[i].stock_quantity < 5) {
                                 console.log(res[i].item_id + ". " + res[i].product_name + " -- Price: " + res[i].price + " -- Qty: " + res[i].stock_quantity);
@@ -72,8 +72,6 @@ var manager = {
                         ]).then((response) => {
                             var stockId = (response.stockItem).substr(0, (response.stockItem).indexOf("."));
                             var stockCnt = parseInt(response.stockAmount) + parseInt(res[stockId - 1].stock_quantity);
-
-                            console.log(response.stockAmount, res[stockId - 1].stock_quantity);
 
                             connection.query("UPDATE products SET ? WHERE ?", [{stock_quantity: stockCnt}, {item_id: stockId}], (err, res, fields) => {
                                 if (err) throw err;
